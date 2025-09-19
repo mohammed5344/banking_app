@@ -30,7 +30,7 @@ $stmt->execute([$_SESSION['user_id']]);
 $balance = $stmt->fetchColumn();
 if ($balance === false) $balance = 0.0;
 
-// -------------------- BUDGET DATA (by category) --------------------
+// -------------------- BUDGET DATA --------------------
 $budgetsStmt = $pdo->prepare("
   SELECT category, item, amount
   FROM BUDGETS
@@ -39,8 +39,8 @@ $budgetsStmt = $pdo->prepare("
 $budgetsStmt->execute(['uid' => $_SESSION['user_id']]);
 $budgetRows = $budgetsStmt->fetchAll();
 
-$budgetByCategory = [];        // category => sum(amount)
-$categoryItems = [];           // category => [items...]
+$budgetByCategory = [];
+$categoryItems = [];
 foreach ($budgetRows as $row) {
   $cat = $row['category'];
   $item = $row['item'];
@@ -55,7 +55,7 @@ foreach ($budgetRows as $row) {
   }
 }
 
-// Ensure at least some categories exist (fallback)
+// Fallback if no budget data
 if (empty($budgetByCategory)) {
   $budgetByCategory = [
     'Food' => 0, 'Rent' => 0, 'Transport' => 0, 'Entertainment' => 0,
@@ -67,9 +67,7 @@ if (empty($budgetByCategory)) {
   ];
 }
 
-// -------------------- SPENDING DATA (by category) --------------------
-// Strategy: pull user's withdrawal transactions and map each to a category
-// if the description contains that category name OR any item name.
+// -------------------- SPENDING DATA --------------------
 $acctIdsStmt = $pdo->prepare("SELECT id FROM ACCOUNTS WHERE user_id = ?");
 $acctIdsStmt->execute([$_SESSION['user_id']]);
 $accountIds = array_column($acctIdsStmt->fetchAll(), 'id');
@@ -78,7 +76,6 @@ $spendByCategory = array_fill_keys(array_keys($budgetByCategory), 0.0);
 $uncategorized = 0.0;
 
 if (!empty($accountIds)) {
-  // Fetch recent withdrawals (you can widen/narrow this window if you like)
   $in = implode(',', array_fill(0, count($accountIds), '?'));
   $txStmt = $pdo->prepare("
     SELECT description, amount
@@ -86,13 +83,11 @@ if (!empty($accountIds)) {
     WHERE account_id IN ($in)
       AND transaction_type = 'withdrawal'
       AND status = 'completed'
-      -- AND created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 90 DAY)
   ");
   $txStmt->execute($accountIds);
   $txs = $txStmt->fetchAll();
 
-  // Precompute lowercase needles for matching
-  $needles = []; // category => [category_lower, item_lowers...]
+  $needles = [];
   foreach ($budgetByCategory as $cat => $_) {
     $needles[$cat] = [mb_strtolower($cat)];
     foreach ($categoryItems[$cat] as $it) {
@@ -122,8 +117,7 @@ if (!empty($accountIds)) {
   }
 }
 
-// Optionally include "Uncategorized" as a category to visualize it
-if ($uncategorized > 0 && !isset($spendByCategory['Uncategorized'])) {
+if ($uncategorized > 0) {
   $budgetByCategory['Uncategorized'] = 0.0;
   $spendByCategory['Uncategorized'] = $uncategorized;
 }
@@ -154,8 +148,7 @@ foreach ($budgetByCategory as $cat => $bAmt) {
   }
 }
 
-// Prepare chart data
-$labels = array_keys($budgetByCategory); // keep consistent order
+$labels = array_keys($budgetByCategory);
 $budgetSeries = [];
 $spendSeries  = [];
 foreach ($labels as $cat) {
@@ -170,8 +163,50 @@ foreach ($labels as $cat) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="style.css" />
   <title>Dashboard</title>
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    /* Smaller radar chart */
+    .chart-card.small {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 260px;
+    }
+    .stats-grid {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+    .stat-box {
+      background: var(--accent);
+      color: white;
+      border: 3px solid var(--border-dark);
+      box-shadow: 4px 4px 0 var(--border-dark);
+      padding: 0.75rem;
+    }
+    .over-budget {
+      margin-top: 0.5rem;
+      background: #ffecec;
+      border: 3px solid var(--border-dark);
+      box-shadow: 4px 4px 0 var(--border-dark);
+      padding: 0.75rem;
+    }
+    .over-budget-list {
+      margin-top: 0.5rem;
+      padding-left: 1.2rem;
+    }
+    .over-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      border: 2px solid var(--border-dark);
+      background: #ff9da1;
+      margin-left: 6px;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -185,7 +220,7 @@ foreach ($labels as $cat) {
     </nav>
   </header>
 
-  <!-- Balance Container -->
+  <!-- Balance -->
   <div class="dashboard-container">
     <div class="dashboard-title">Account Balance</div>
     <div class="dashboard-content">
@@ -196,12 +231,14 @@ foreach ($labels as $cat) {
     </div>
   </div>
 
-  <!-- ********** NEW: Budget vs Spending Radar ********** -->
+  <!-- Radar Chart -->
   <div class="dashboard-container">
     <div class="dashboard-title">Budget vs Spending</div>
     <div class="dashboard-content">
-      <div class="chart-card">
-        <canvas id="budgetRadar" height="200"></canvas>
+      <div class="chart-card small">
+        <div class="chart-wrap">
+          <canvas id="budgetRadar"></canvas>
+        </div>
       </div>
 
       <div class="stats-grid">
@@ -239,64 +276,52 @@ foreach ($labels as $cat) {
       <?php endif; ?>
     </div>
   </div>
-  <!-- ********** /NEW ********** -->
 
-  <!-- Other Dashboard Cards -->
+  <!-- Other Dashboard -->
   <div class="dashboard-container">
     <div class="dashboard-title">Dashboard</div>
     <div class="dashboard-content">
       <a style="text-decoration: none;" href="../budget/budget.php" class="card-link">
-        <div class="card">
-          <h3>Budgets</h3>
-        </div>
+        <div class="card"><h3>Budgets</h3></div>
       </a>
       <a style="text-decoration: none;" href="notifications.html" class="card-link">
-        <div class="card">
-          <h3>Notifications</h3>
-        </div>
+        <div class="card"><h3>Notifications</h3></div>
       </a>
     </div>
   </div>
 
   <script>
-    // Pass PHP data to JS
     const radarLabels = <?php echo json_encode($labels, JSON_UNESCAPED_UNICODE); ?>;
     const budgetData  = <?php echo json_encode($budgetSeries, JSON_UNESCAPED_UNICODE); ?>;
     const spendData   = <?php echo json_encode($spendSeries, JSON_UNESCAPED_UNICODE); ?>;
 
     const ctx = document.getElementById('budgetRadar').getContext('2d');
-    // Chart.js will auto-pick colors; we avoid forcing colors to keep your CSS theme in control
     new Chart(ctx, {
       type: 'radar',
       data: {
         labels: radarLabels,
         datasets: [
-          {
-            label: 'Budget',
-            data: budgetData,
-            fill: true
-          },
-          {
-            label: 'Spending',
-            data: spendData,
-            fill: true
-          }
+          { label: 'Budget', data: budgetData, fill: true },
+          { label: 'Spending', data: spendData, fill: true }
         ]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        transitions: {
+          active: { animation: { duration: 0 } },
+          show:   { animations: { numbers: { duration: 0 }, colors: { duration: 0 } } },
+          hide:   { animations: { numbers: { duration: 0 }, colors: { duration: 0 } } }
+        },
         plugins: {
-          legend: { position: 'top' },
-          title: { display: false }
+          legend: {
+            position: 'top',
+            onClick: () => {} // Disable toggling datasets
+          }
         },
         scales: {
-          r: {
-            beginAtZero: true,
-            ticks: {
-              // keep it readable with your pixel font
-              showLabelBackdrop: false
-            }
-          }
+          r: { beginAtZero: true, ticks: { showLabelBackdrop: false } }
         }
       }
     });
