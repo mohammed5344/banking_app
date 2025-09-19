@@ -63,6 +63,10 @@ foreach ($spendByCategory as $cat => $amt) {
   }
 }
 
+<<<<<<< HEAD:userpage/dashboard/dashboard.php
+=======
+// -------------------- OVER BUDGET --------------------
+>>>>>>> 28b01be (hearts):dashboard/dashboard.php
 $budgetByCategory = [
   'Food' => 100,
   'Rent' => 1000,
@@ -83,10 +87,40 @@ foreach ($spendByCategory as $cat => $amt) {
   }
 }
 
+// -------------------- BUDGET HEALTH (AVERAGE UTILIZATION) --------------------
+// Sum only categories with positive budgets to avoid dividing by zero or skewing with "Uncategorized"
+$totalBudget = 0.0;
+$trackedSpending = 0.0;
+
+foreach ($spendByCategory as $cat => $amt) {
+  $budget = $budgetByCategory[$cat] ?? 0.0;
+  if ($budget > 0) {
+    $totalBudget += (float)$budget;
+    $trackedSpending += (float)$amt;
+  }
+}
+
+// Average utilization across all budgeted categories (weighted)
+$avgUtil = $totalBudget > 0 ? ($trackedSpending / $totalBudget) : 0.0;
+if (!is_finite($avgUtil)) $avgUtil = 0.0;
+
+// Hearts health model (gradual depletion as you consume budget)
+$healthRatio = 1.0 - $avgUtil;              // 1.0 = perfect (0% used), 0.0 = 100% used or more
+$healthRatio = max(0.0, min(1.0, $healthRatio));
+
+$heartsTotal = 10;                           // Change to 5, 20, etc. if you want
+$heartsExact = $healthRatio * $heartsTotal;
+$fullHearts  = (int)floor($heartsExact);
+$halfHeart   = (($heartsExact - $fullHearts) >= 0.5) ? 1 : 0;
+$emptyHearts = $heartsTotal - $fullHearts - $halfHeart;
+
+$budgetUsedPct = max(0.0, min(100.0, $avgUtil * 100.0));
+
+// -------------------- CHART DATA --------------------
 $labels = array_keys($spendByCategory);
-$spendSeries  = [];
+$spendSeries = [];
 foreach ($labels as $cat) {
-  $spendSeries[]  = round($spendByCategory[$cat] ?? 0, 2);
+  $spendSeries[] = round($spendByCategory[$cat] ?? 0, 2);
 }
 ?>
 <!DOCTYPE html>
@@ -109,25 +143,21 @@ foreach ($labels as $cat) {
       box-shadow: 6px 6px 0 #000;
       background: #fff;
     }
-
     .chart-wrap {
       position: relative;
       width: 100%;
       height: 380px;
     }
-
     #spendRadar {
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
-
     .stats-grid {
       margin-top: 1rem;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 0.75rem;
     }
-
     .stat-box {
       background: #64b5f6;
       color: white;
@@ -135,14 +165,12 @@ foreach ($labels as $cat) {
       box-shadow: 4px 4px 0 #000;
       padding: 0.75rem;
     }
-
     .over-budget-grid {
       margin-top: 1rem;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 0.75rem;
     }
-
     .over-budget-box {
       background: #f44336;
       color: white;
@@ -174,7 +202,7 @@ foreach ($labels as $cat) {
     </div>
   </div>
 
-  <!-- Other Dashboard -->
+  <!-- Quick links -->
   <div class="dashboard-container">
     <div class="dashboard-title">Dashboard</div>
     <div class="dashboard-content">
@@ -191,6 +219,7 @@ foreach ($labels as $cat) {
     </div>
   </div>
 
+  <!-- Spending section -->
   <div class="dashboard-container">
     <div class="dashboard-title">Spending by Category</div>
     <div class="dashboard-content">
@@ -223,7 +252,39 @@ foreach ($labels as $cat) {
           <?php endforeach; ?>
         </div>
       <?php endif; ?>
+    </div>
+  </div>
 
+  <!-- Budget Health (Pixel Hearts) -->
+  <div class="dashboard-container">
+    <div class="dashboard-title">Budget Health</div>
+    <div class="dashboard-content">
+      <div class="budget-health-card">
+        <div class="hearts-row" aria-label="Budget Health Hearts">
+          <?php for ($i = 0; $i < $fullHearts; $i++): ?>
+            <svg class="heart full" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <path d="M16 29s-9-6.2-13-11C-0.2 11.6 3 4 9 4c3 0 5 2 7 4 2-2 4-4 7-4 6 0 9.2 7.6 6 14-4 4.8-13 11-13 11z"/>
+            </svg>
+          <?php endfor; ?>
+
+          <?php if ($halfHeart): ?>
+            <svg class="heart half" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <path d="M16 29s-9-6.2-13-11C-0.2 11.6 3 4 9 4c3 0 5 2 7 4 2-2 4-4 7-4 6 0 9.2 7.6 6 14-4 4.8-13 11-13 11z"/>
+            </svg>
+          <?php endif; ?>
+
+          <?php for ($i = 0; $i < $emptyHearts; $i++): ?>
+            <svg class="heart empty" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <path d="M16 29s-9-6.2-13-11C-0.2 11.6 3 4 9 4c3 0 5 2 7 4 2-2 4-4 7-4 6 0 9.2 7.6 6 14-4 4.8-13 11-13 11z"/>
+            </svg>
+          <?php endfor; ?>
+        </div>
+
+        <div class="health-caption">
+          <p><strong><?php echo number_format($budgetUsedPct, 1); ?>% of budget used</strong></p>
+          <p>Hearts reflect <em>overall</em> average utilization across categories. Being under in some categories offsets overspending in others.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -253,18 +314,13 @@ foreach ($labels as $cat) {
         maintainAspectRatio: false,
         animation: false,
         plugins: {
-          legend: {
-            display: false
-          }
+          legend: { display: false }
         },
         scales: {
-          r: {
-            beginAtZero: true
-          }
+          r: { beginAtZero: true }
         }
       }
     });
   </script>
 </body>
-
 </html>
