@@ -4,8 +4,8 @@ session_start();
 // --- MySQL DB connection ---
 $host = '127.0.0.1';
 $db   = 'database';  // replace with your database name
-$user = 'root';                // WAMP default
-$pass = '';                    // WAMP default
+$user = 'root';      // WAMP default
+$pass = '';          // WAMP default
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -38,14 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$user) {
         $_SESSION['error'] = "Invalid login credentials.";
-        header("Location: login.php");
+        header("Location: userpage/login/login.php");
         exit();
     }
 
     // Check if account is active
     if ($user['is_active'] == 0) {
         $_SESSION['error'] = "Your account is locked. Please contact support.";
-        header("Location: login.php");
+        header("Location: userpage/login/login.php");
         exit();
     }
 
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_name'] = $user['first_name'];
 
         // Redirect to dashboard
-        header("Location: ..\dashboard\dashboard.php");
+        header("Location: ../dashboard/dashboard.php");
         exit();
     } else {
         $_SESSION['attempts'][$user['id']]++;
@@ -79,12 +79,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['error'] = "Wrong password. Attempt {$_SESSION['attempts'][$user['id']]} of 3.";
         }
 
-        header("Location: login.php");
+        header("Location: userpage/login/login.php");
         exit();
     }
 } else {
     // Redirect if accessed directly
-    header("Location: login.php");
+    header("Location: userpage/login/login.php");
     exit();
 }
 ?>

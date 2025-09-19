@@ -1,0 +1,122 @@
+:root {
+    --primary: #1a365d;
+    --accent: #64b5f6;
+    --border-dark: #000;
+}
+
+body {
+    font-family: 'Press Start 2P', cursive, monospace;
+    background: #d6d6d6;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Header */
+header {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 4px solid var(--border-dark);
+    box-shadow: 4px 4px 0 var(--border-dark);
+}
+
+header nav ul {
+    list-style: none;
+    display: flex;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+}
+
+header nav ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 0.25rem 0.5rem;
+    border: 2px solid var(--border-dark);
+    background: var(--accent);
+    box-shadow: 2px 2px 0 var(--border-dark);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+header nav ul li a:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 var(--border-dark);
+}
+
+/* Dashboard container */
+.dashboard-container {
+    width: 95%;
+    max-width: 1200px;
+    margin: 1rem auto;
+}
+
+.dashboard-title {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+/* Cards Grid */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.category-card {
+    padding: 1rem;
+    border: 4px solid var(--border-dark);
+    box-shadow: 4px 4px 0 var(--border-dark);
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+}
+
+.category-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--border-dark);
+}
+
+.category-card h3 {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Store info inside category card */
+.store-card {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border: 3px solid var(--border-dark);
+    box-shadow: 2px 2px 0 var(--border-dark);
+    background: #fff;
+    color: #000;
+    font-size: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.store-card p {
+    margin: 0;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    header nav ul {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
