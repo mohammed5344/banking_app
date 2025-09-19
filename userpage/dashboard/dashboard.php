@@ -1,13 +1,11 @@
 <?php
 session_start();
 
-// Ensure user is logged in
 if (!isset($_SESSION['user_id'])) {
   header("Location: ../login.php");
   exit();
 }
 
-// DB connection
 $host = '127.0.0.1';
 $db   = 'database';
 $user = 'root';
@@ -24,13 +22,11 @@ try {
   die("DB Connection failed: " . $e->getMessage());
 }
 
-// -------------------- BALANCE --------------------
 $stmt = $pdo->prepare("SELECT balance FROM ACCOUNTS WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $balance = $stmt->fetchColumn();
 if ($balance === false) $balance = 0.0;
 
-// -------------------- SPENDING DATA --------------------
 $acctIdsStmt = $pdo->prepare("SELECT id FROM ACCOUNTS WHERE user_id = ?");
 $acctIdsStmt->execute([$_SESSION['user_id']]);
 $accountIds = array_column($acctIdsStmt->fetchAll(), 'id');
@@ -57,7 +53,6 @@ if (!empty($accountIds)) {
   }
 }
 
-// -------------------- STATS --------------------
 $totalSpending = array_sum($spendByCategory);
 $topCat = null;
 $topAmt = -1;
@@ -68,8 +63,6 @@ foreach ($spendByCategory as $cat => $amt) {
   }
 }
 
-// -------------------- OVER BUDGET --------------------
-// Define your budget for each category
 $budgetByCategory = [
   'Food' => 100,
   'Rent' => 1000,
@@ -103,6 +96,8 @@ foreach ($labels as $cat) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="../assets/logo.jpg">
+
   <title>Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
