@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Verify password
-    if (password_verify($password, $user['password'])) {
+    if ($password === $user['password']) {
         // Reset attempts
         $_SESSION['attempts'][$user['id']] = 0;
 
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_name'] = $user['first_name'];
 
         // Redirect to dashboard
-        header("Location: dashboard/dashboard.html");
+        header("Location: ..\dashboard\dashboard.php");
         exit();
     } else {
         $_SESSION['attempts'][$user['id']]++;

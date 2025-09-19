@@ -140,6 +140,29 @@ nav ul li a:hover {
   transform: translate(-2px, -2px);
   box-shadow: 6px 6px 0 var(--border-dark);
 }
+/* Balance container */
+.balance-container {
+  width: 100%;
+  padding: 1rem;
+  background: var(--card-bg); /* same as dashboard container */
+  color: var(--text);
+  text-align: left;
+  border: 4px solid var(--border-dark);
+  box-shadow: 6px 6px 0 var(--border-dark);
+}
+
+/* Remove hover effects for balance */
+.balance-container h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.balance-amount {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+
 
 /* Responsive */
 @media (max-width: 600px) {
