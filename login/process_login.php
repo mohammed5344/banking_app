@@ -1,15 +1,26 @@
 <?php
 session_start();
 
-// DB connection (SQLite for your db/DATABASE.sql)
+// --- MySQL DB connection ---
+$host = '127.0.0.1';
+$db   = 'database';  // replace with your database name
+$user = 'root';                // WAMP default
+$pass = '';                    // WAMP default
+$charset = 'utf8mb4';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+
 try {
-    $pdo = new PDO("sqlite:db/DATABASE.sql");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (Exception $e) {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (PDOException $e) {
     die("DB Connection failed: " . $e->getMessage());
 }
 
-// Handle login form
+// --- Handle login form ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
@@ -23,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         LIMIT 1
     ");
     $stmt->execute(['username' => $username]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user = $stmt->fetch();
 
     if (!$user) {
         $_SESSION['error'] = "Invalid login credentials.";
@@ -48,6 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Reset attempts
         $_SESSION['attempts'][$user['id']] = 0;
 
+        // Set session info (optional)
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['first_name'];
+
         // Redirect to dashboard
         header("Location: dashboard/dashboard.html");
         exit();
@@ -67,4 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: login.php");
         exit();
     }
+} else {
+    // Redirect if accessed directly
+    header("Location: login.php");
+    exit();
 }
+?>
