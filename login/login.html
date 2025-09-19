@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Banking Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <div class="login-container">
+        <div class="bank-logo">
+            Reboot Banking
+        </div>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="username">Username or Account Number</label>
+                <input type="text" id="username" required autocomplete="username">
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            
+            <div class="remember-forgot">
+                <label class="remember-me">
+                    <input type="checkbox" id="remember">
+                    Remember me
+                </label>
+                <a href="#" class="forgot-password">Forgot Password?</a>
+            </div>
+            
+            <button type="submit" class="login-button">Login</button>
+        </form>
+
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
