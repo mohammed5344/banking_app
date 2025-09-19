@@ -55,6 +55,7 @@ foreach ($budgetRows as $row) {
   }
 }
 
+// Fallback if no budget data yet
 if (empty($budgetByCategory)) {
   $budgetByCategory = [
     'Food' => 0, 'Rent' => 0, 'Transport' => 0, 'Entertainment' => 0,
@@ -160,17 +161,31 @@ foreach ($labels as $cat) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="style.css" />
   <title>Dashboard</title>
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <style>
+    /* Pixel/8-bit vibe for the chart container */
     .chart-card {
-      max-width: 600px;   /* bigger than before */
+      max-width: 640px;
       margin: 0 auto;
+      background: var(--card-bg, #fff);
+      border: 4px solid var(--border-dark, #000);
+      box-shadow: 6px 6px 0 var(--border-dark, #000);
+      padding: 1rem;
     }
     .chart-wrap {
       position: relative;
       width: 100%;
-      height: 360px;      /* taller chart */
+      height: 380px;
     }
+    /* Make the canvas render blocky like pixel-art */
+    #spendRadar {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    /* Stats & over-budget (kept from previous style) */
     .stats-grid {
       margin-top: 1rem;
       display: grid;
@@ -178,24 +193,24 @@ foreach ($labels as $cat) {
       gap: 0.75rem;
     }
     .stat-box {
-      background: var(--accent);
+      background: var(--accent, #64b5f6);
       color: white;
-      border: 3px solid var(--border-dark);
-      box-shadow: 4px 4px 0 var(--border-dark);
+      border: 3px solid var(--border-dark, #000);
+      box-shadow: 4px 4px 0 var(--border-dark, #000);
       padding: 0.75rem;
     }
     .over-budget {
       margin-top: 0.5rem;
       background: #ffecec;
-      border: 3px solid var(--border-dark);
-      box-shadow: 4px 4px 0 var(--border-dark);
+      border: 3px solid var(--border-dark, #000);
+      box-shadow: 4px 4px 0 var(--border-dark, #000);
       padding: 0.75rem;
     }
     .over-budget-list { margin-top: 0.5rem; padding-left: 1.2rem; }
     .over-pill {
       display: inline-block;
       padding: 2px 6px;
-      border: 2px solid var(--border-dark);
+      border: 2px solid var(--border-dark, #000);
       background: #ff9da1;
       margin-left: 6px;
     }
@@ -224,7 +239,7 @@ foreach ($labels as $cat) {
     </div>
   </div>
 
-  <!-- Radar Chart -->
+  <!-- Pixel-styled Radar Chart -->
   <div class="dashboard-container">
     <div class="dashboard-title">Spending by Category</div>
     <div class="dashboard-content">
@@ -284,34 +299,94 @@ foreach ($labels as $cat) {
   </div>
 
   <script>
+    // Use the same pixel font across the chart
+    Chart.defaults.font.family = '"Press Start 2P", monospace';
+    Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text') || '#222';
+
     const radarLabels = <?php echo json_encode($labels, JSON_UNESCAPED_UNICODE); ?>;
     const spendData   = <?php echo json_encode($spendSeries, JSON_UNESCAPED_UNICODE); ?>;
 
+    const cssVars = getComputedStyle(document.documentElement);
+    const borderDark = cssVars.getPropertyValue('--border-dark')?.trim() || '#000';
+    const primary    = cssVars.getPropertyValue('--primary')?.trim() || '#1a365d';
+    const accent     = cssVars.getPropertyValue('--accent')?.trim() || '#64b5f6';
+
     const ctx = document.getElementById('spendRadar').getContext('2d');
+
     new Chart(ctx, {
       type: 'radar',
       data: {
         labels: radarLabels,
-        datasets: [
-          {
-            label: 'Spending',
-            data: spendData,
-            fill: true
-          }
-        ]
+        datasets: [{
+          label: 'Spending',
+          data: spendData,
+          fill: true,
+          backgroundColor: hexToRgba(accent, 0.25),
+          borderColor: borderDark,
+          borderWidth: 4,               // chunky outline for pixel vibe
+          pointStyle: 'rect',           // square points
+          pointRadius: 6,               // bigger pixel nodes
+          pointHoverRadius: 6,
+          pointBackgroundColor: primary,
+          pointBorderColor: borderDark,
+          pointBorderWidth: 3
+        }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: false,
+        animation: false,               // no animation
         plugins: {
-          legend: { display: false } // hide legend completely
+          legend: { display: false },   // hide legend (single dataset)
+          tooltip: {
+            backgroundColor: borderDark,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderWidth: 3,
+            borderColor: '#fff',
+            displayColors: false
+          }
         },
         scales: {
-          r: { beginAtZero: true, ticks: { showLabelBackdrop: false } }
+          r: {
+            beginAtZero: true,
+            angleLines: {
+              color: borderDark,
+              lineWidth: 2
+            },
+            grid: {
+              color: borderDark,
+              lineWidth: 2
+            },
+            ticks: {
+              showLabelBackdrop: false,
+              backdropColor: 'transparent',
+              font: { size: 8 } // pixel font is dense; keep small
+            },
+            pointLabels: {
+              font: { size: 9 },       // category label size
+              color: borderDark
+            }
+          }
+        },
+        elements: {
+          line: {
+            borderJoinStyle: 'miter'   // sharper joins (retro feel)
+          }
         }
       }
     });
+
+    // Helper to convert hex -> rgba with alpha
+    function hexToRgba(hex, alpha) {
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(ch => ch + ch).join('');
+      const bigint = parseInt(c, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
   </script>
 </body>
 </html>
