@@ -70,14 +70,21 @@ foreach ($existing as $row) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Budget Dashboard</title>
+    <title>budget</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="../assets/logo.jpg">
 </head>
 
 <body>
 
     <header>
-        <div class="logo">Reboot Banking</div>
+        <div class="logo">Reboozt Banking</div>
+        <nav>
+            <ul>
+                <li><a href="../dashboard/dashboard.php">Dashboard</a></li>
+                <li><a href="../login/logout.php">Logout</a></li>
+            </ul>
+        </nav>
     </header>
 
     <div class="dashboard-container">

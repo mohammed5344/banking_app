@@ -177,12 +177,12 @@ nav ul li a:hover {
   }
 }
 
-/* Chart & stats */
 .chart-card {
   background: var(--card-bg);
   border: 3px solid var(--border-dark);
   box-shadow: 4px 4px 0 var(--border-dark);
   padding: 1rem;
+
 }
 
 .stats-grid {
