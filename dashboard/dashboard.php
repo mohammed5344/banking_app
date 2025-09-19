@@ -55,7 +55,6 @@ foreach ($budgetRows as $row) {
   }
 }
 
-// Fallback if no budget data
 if (empty($budgetByCategory)) {
   $budgetByCategory = [
     'Food' => 0, 'Rent' => 0, 'Transport' => 0, 'Entertainment' => 0,
@@ -149,10 +148,8 @@ foreach ($budgetByCategory as $cat => $bAmt) {
 }
 
 $labels = array_keys($budgetByCategory);
-$budgetSeries = [];
 $spendSeries  = [];
 foreach ($labels as $cat) {
-  $budgetSeries[] = round($budgetByCategory[$cat] ?? 0, 2);
   $spendSeries[]  = round($spendByCategory[$cat] ?? 0, 2);
 }
 ?>
@@ -165,15 +162,14 @@ foreach ($labels as $cat) {
   <title>Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    /* Smaller radar chart */
-    .chart-card.small {
-      max-width: 420px;
+    .chart-card {
+      max-width: 600px;   /* bigger than before */
       margin: 0 auto;
     }
     .chart-wrap {
       position: relative;
       width: 100%;
-      height: 260px;
+      height: 360px;      /* taller chart */
     }
     .stats-grid {
       margin-top: 1rem;
@@ -195,10 +191,7 @@ foreach ($labels as $cat) {
       box-shadow: 4px 4px 0 var(--border-dark);
       padding: 0.75rem;
     }
-    .over-budget-list {
-      margin-top: 0.5rem;
-      padding-left: 1.2rem;
-    }
+    .over-budget-list { margin-top: 0.5rem; padding-left: 1.2rem; }
     .over-pill {
       display: inline-block;
       padding: 2px 6px;
@@ -233,11 +226,11 @@ foreach ($labels as $cat) {
 
   <!-- Radar Chart -->
   <div class="dashboard-container">
-    <div class="dashboard-title">Budget vs Spending</div>
+    <div class="dashboard-title">Spending by Category</div>
     <div class="dashboard-content">
-      <div class="chart-card small">
+      <div class="chart-card">
         <div class="chart-wrap">
-          <canvas id="budgetRadar"></canvas>
+          <canvas id="spendRadar"></canvas>
         </div>
       </div>
 
@@ -292,33 +285,27 @@ foreach ($labels as $cat) {
 
   <script>
     const radarLabels = <?php echo json_encode($labels, JSON_UNESCAPED_UNICODE); ?>;
-    const budgetData  = <?php echo json_encode($budgetSeries, JSON_UNESCAPED_UNICODE); ?>;
     const spendData   = <?php echo json_encode($spendSeries, JSON_UNESCAPED_UNICODE); ?>;
 
-    const ctx = document.getElementById('budgetRadar').getContext('2d');
+    const ctx = document.getElementById('spendRadar').getContext('2d');
     new Chart(ctx, {
       type: 'radar',
       data: {
         labels: radarLabels,
         datasets: [
-          { label: 'Budget', data: budgetData, fill: true },
-          { label: 'Spending', data: spendData, fill: true }
+          {
+            label: 'Spending',
+            data: spendData,
+            fill: true
+          }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
-        transitions: {
-          active: { animation: { duration: 0 } },
-          show:   { animations: { numbers: { duration: 0 }, colors: { duration: 0 } } },
-          hide:   { animations: { numbers: { duration: 0 }, colors: { duration: 0 } } }
-        },
         plugins: {
-          legend: {
-            position: 'top',
-            onClick: () => {} // Disable toggling datasets
-          }
+          legend: { display: false } // hide legend completely
         },
         scales: {
           r: { beginAtZero: true, ticks: { showLabelBackdrop: false } }
