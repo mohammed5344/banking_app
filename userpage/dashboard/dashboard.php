@@ -63,10 +63,6 @@ foreach ($spendByCategory as $cat => $amt) {
   }
 }
 
-<<<<<<< HEAD:userpage/dashboard/dashboard.php
-=======
-// -------------------- OVER BUDGET --------------------
->>>>>>> 28b01be (hearts):dashboard/dashboard.php
 $budgetByCategory = [
   'Food' => 100,
   'Rent' => 1000,
