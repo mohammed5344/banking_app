@@ -1,4 +1,33 @@
 # app.py
+
+def seed_example_users():
+    users = [
+        ("Alex", "Tester", "alex@example.com", "12345", "555-0100", "123 Hackathon Ave", 0, 1),
+        ("Sam", "Smith", "sam@bank.com", "12345", "555-0101", "456 Main St", 0, 1),
+        ("Jane", "Doe", "jane@bank.com", "12345", "555-0102", "789 Elm St", 1, 1),
+        ("Bob", "Brown", "bob@bank.com", "12345", "555-0103", "321 Oak St", 0, 1),
+    ]
+    with get_db() as conn:
+        for u in users:
+            conn.execute("""
+                INSERT OR IGNORE INTO USERS(first_name, last_name, email, password, phone, address, is_admin, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, u)
+        # Optionally, create accounts for each user
+        for email in ["alex@example.com", "sam@bank.com", "jane@bank.com", "bob@bank.com"]:
+            user_id = conn.execute("SELECT id FROM USERS WHERE email=?", (email,)).fetchone()["id"]
+            conn.execute("""INSERT OR IGNORE INTO ACCOUNT_TYPES(name, description)
+                            VALUES('checking','Default checking')""")
+            acct_type_id = conn.execute("SELECT id FROM ACCOUNT_TYPES WHERE name='checking'").fetchone()["id"]
+            acct_num = f"RB-{user_id:06d}"
+            conn.execute("""INSERT OR IGNORE INTO ACCOUNTS(user_id, account_type_id, account_number, balance)
+                            VALUES (?, ?, ?, ?)""", (user_id, acct_type_id, acct_num, 1000.00))
+
+def init_db():
+    if not pathlib.Path(DB_PATH).exists():
+        with get_db() as conn, open(SCHEMA_PATH, "r", encoding="utf-8") as f:
+            conn.executescript(f.read())
+        seed_example_users()
 import sqlite3, pathlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
