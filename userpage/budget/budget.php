@@ -1,17 +1,15 @@
 <?php
 session_start();
 
-// For testing, set a user_id. In production, get this from login session
 if (!isset($_SESSION['user_id'])) {
-    $_SESSION['user_id'] = 1; // example user id
+    $_SESSION['user_id'] = 1;
 }
 $user_id = $_SESSION['user_id'];
 
-// Database connection
 $host = 'localhost';
-$db = 'database'; // your database name
+$db = 'database';
 $user = 'root';
-$pass = ''; // your MySQL password
+$pass = '';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -26,7 +24,6 @@ try {
     die("DB Connection failed: " . $e->getMessage());
 }
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $budgets = $_POST['budget'] ?? [];
 
@@ -34,17 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($items as $item => $amount) {
             $amount = floatval($amount);
 
-            // Check if budget already exists
             $stmt = $pdo->prepare("SELECT id FROM BUDGETS WHERE user_id = :uid AND category = :cat AND item = :item");
             $stmt->execute(['uid' => $user_id, 'cat' => $category, 'item' => $item]);
             $exists = $stmt->fetch();
 
             if ($exists) {
-                // Update
                 $update = $pdo->prepare("UPDATE BUDGETS SET amount = :amt WHERE id = :id");
                 $update->execute(['amt' => $amount, 'id' => $exists['id']]);
             } else {
-                // Insert
                 $insert = $pdo->prepare("INSERT INTO BUDGETS (user_id, category, item, amount) VALUES (:uid, :cat, :item, :amt)");
                 $insert->execute(['uid' => $user_id, 'cat' => $category, 'item' => $item, 'amt' => $amount]);
             }
@@ -54,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = "Budget saved successfully!";
 }
 
-// Fetch existing budgets
 $stmt = $pdo->prepare("SELECT category, item, amount FROM BUDGETS WHERE user_id = :uid");
 $stmt->execute(['uid' => $user_id]);
 $existing = $stmt->fetchAll();

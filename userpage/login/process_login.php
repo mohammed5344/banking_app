@@ -1,11 +1,10 @@
 <?php
 session_start();
 
-// --- MySQL DB connection ---
 $host = '127.0.0.1';
-$db   = 'database';  // replace with your database name
-$user = 'root';      // WAMP default
-$pass = '';          // WAMP default
+$db   = 'database';
+$user = 'root';
+$pass = '';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -20,12 +19,10 @@ try {
     die("DB Connection failed: " . $e->getMessage());
 }
 
-// --- Handle login form ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-    // Find user by email or account number
     $stmt = $pdo->prepare("
         SELECT u.*, a.account_number 
         FROM USERS u
@@ -42,28 +39,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Check if account is active
     if ($user['is_active'] == 0) {
         $_SESSION['error'] = "Your account is locked. Please contact support.";
         header("Location: userpage/login/login.php");
         exit();
     }
 
-    // Track login attempts in session
     if (!isset($_SESSION['attempts'][$user['id']])) {
         $_SESSION['attempts'][$user['id']] = 0;
     }
 
-    // Verify password
     if ($password === $user['password']) {
-        // Reset attempts
         $_SESSION['attempts'][$user['id']] = 0;
 
-        // Set session info (optional)
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['first_name'];
 
-        // Redirect to dashboard
         header("Location: ../dashboard/dashboard.php");
         exit();
     } else {
@@ -87,4 +78,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: userpage/login/login.php");
     exit();
 }
-?>

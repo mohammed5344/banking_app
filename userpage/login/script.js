@@ -1,4 +1,3 @@
-// --- PHP login hook ---
 const form = document.getElementById('loginForm');
 if (form) {
   form.addEventListener('submit', async (e) => {
@@ -24,10 +23,8 @@ if (form) {
         return;
       }
 
-      // Optional: store minimal user info
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Redirect as requested
       window.location.href = data.redirect || '/dashboard/dashboard.html';
     } catch (err) {
       console.error(err);

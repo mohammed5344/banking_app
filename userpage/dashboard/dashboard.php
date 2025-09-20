@@ -17,12 +17,10 @@ $pdo = new PDO($dsn, $user, $pass, [
   PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
 ]);
 
-// Get user accounts
 $acctIdsStmt = $pdo->prepare("SELECT id FROM ACCOUNTS WHERE user_id = ?");
 $acctIdsStmt->execute([$_SESSION['user_id']]);
 $accountIds = array_column($acctIdsStmt->fetchAll(), 'id');
 
-// Categories
 $categories = ['Food', 'Rent', 'Transport', 'Entertainment', 'Health', 'Savings', 'Car', 'Others', 'Uncategorized'];
 $spendByCategory = array_fill_keys($categories, 0.0);
 
@@ -38,7 +36,6 @@ if (!empty($accountIds)) {
   $txStmt->execute($accountIds);
   $txs = $txStmt->fetchAll();
 
-  // Categorize based on description
   foreach ($txs as $tx) {
     $desc = strtolower($tx['description']);
     if (str_contains($desc, 'amazon') || str_contains($desc, 'starbucks') || str_contains($desc, 'food')) $cat = 'Food';
@@ -55,7 +52,6 @@ if (!empty($accountIds)) {
   }
 }
 
-// Totals
 $totalSpending = array_sum($spendByCategory);
 $topCat = null;
 $topAmt = -1;
@@ -66,7 +62,6 @@ foreach ($spendByCategory as $cat => $amt) {
   }
 }
 
-// Sample budgets
 $budgetByCategory = [
   'Food' => 100,
   'Rent' => 1000,
@@ -79,30 +74,25 @@ $budgetByCategory = [
   'Uncategorized' => 0
 ];
 
-// Over budget categories
 $overBudget = [];
 foreach ($spendByCategory as $cat => $amt) {
   $budget = $budgetByCategory[$cat] ?? 0;
   if ($amt > $budget) $overBudget[$cat] = $amt;
 }
 
-// Heart system
 $heartsTotal = 10;
 $heartsLost = count($overBudget);
 $fullHearts = max(0, $heartsTotal - $heartsLost);
 $emptyHearts = $heartsTotal - $fullHearts;
 
-// Chart data
 $labels = array_keys($spendByCategory);
 $spendSeries = [];
 foreach ($labels as $cat) $spendSeries[] = round($spendByCategory[$cat], 2);
 
-// Account balance
 $balanceStmt = $pdo->prepare("SELECT SUM(balance) FROM ACCOUNTS WHERE user_id = ?");
 $balanceStmt->execute([$_SESSION['user_id']]);
 $balance = (float)$balanceStmt->fetchColumn();
 
-// Fetch notifications
 $notifStmt = $pdo->prepare("SELECT * FROM NOTIFICATIONS WHERE user_id=? ORDER BY created_at DESC");
 $notifStmt->execute([$_SESSION['user_id']]);
 $notifications = $notifStmt->fetchAll();

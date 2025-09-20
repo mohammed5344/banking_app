@@ -1,13 +1,11 @@
 <?php
 session_start();
 
-// Ensure user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login/login.php");
     exit();
 }
 
-// --- DB Connection ---
 $host = '127.0.0.1';
 $db   = 'database';
 $user = 'root';
@@ -26,10 +24,8 @@ try {
     die("DB Connection failed: " . $e->getMessage());
 }
 
-// Get logged-in user id
 $user_id = $_SESSION['user_id'];
 
-// --- Fetch user's account IDs ---
 $stmt = $pdo->prepare("SELECT id FROM ACCOUNTS WHERE user_id = ?");
 $stmt->execute([$user_id]);
 $accountIds = array_column($stmt->fetchAll(), 'id');
@@ -49,6 +45,7 @@ if (!empty($accountIds)) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Your Transactions</title>
@@ -61,13 +58,35 @@ if (!empty($accountIds)) {
             box-shadow: 4px 4px 0 var(--border-dark);
             background: #fefefe;
         }
-        .transaction-card.green { background: #b2f2bb; } /* received */
-        .transaction-card.red { background: #ffa8a8; }   /* sent */
-        .transaction-amount { font-size: 1.2rem; font-weight: bold; }
-        .transaction-desc { margin-top: 0.5rem; font-size: 0.9rem; }
-        .transaction-date { margin-top: 0.25rem; font-size: 0.75rem; color: #333; }
+
+        .transaction-card.green {
+            background: #b2f2bb;
+        }
+
+        /* received */
+        .transaction-card.red {
+            background: #ffa8a8;
+        }
+
+        /* sent */
+        .transaction-amount {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .transaction-desc {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .transaction-date {
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+            color: #333;
+        }
     </style>
 </head>
+
 <body>
     <header>
         <div class="logo">Reboozt Banking</div>
@@ -87,11 +106,10 @@ if (!empty($accountIds)) {
             <?php else: ?>
                 <?php foreach ($transactions as $tx): ?>
                     <?php
-                        // Detect "received" or "sent" from description text
-                        $isReceived = stripos($tx['description'], 'received') !== false;
+                    $isReceived = stripos($tx['description'], 'received') !== false;
 
-                        $cardClass = $isReceived ? 'green' : 'red';
-                        $amountSign = $isReceived ? '+' : '-';
+                    $cardClass = $isReceived ? 'green' : 'red';
+                    $amountSign = $isReceived ? '+' : '-';
                     ?>
                     <div class="transaction-card <?php echo $cardClass; ?>">
                         <div class="transaction-amount">
@@ -109,4 +127,5 @@ if (!empty($accountIds)) {
         </div>
     </div>
 </body>
+
 </html>

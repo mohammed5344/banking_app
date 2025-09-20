@@ -4,6 +4,17 @@
     --border-dark: #000;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Press Start 2P', cursive, monospace;
+    /* Pixel font */
+
+}
+
 body {
     font-family: 'Press Start 2P', cursive, monospace;
     background: #d6d6d6;
